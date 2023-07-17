@@ -1,132 +1,176 @@
 ﻿#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
+#include <unordered_map>
+#include <queue>
 
-class Vertex
-{	
-private:
-	int id = 0;
-	std::string color;
-	std::vector<int> connections;
+using namespace std;
 
+// Класс для представления фишек
+class Chip 
+{
 public:
+    int id;
+    int position;
 
-	friend void initVertices(std::vector<Vertex>& vertices, int numVertices);
-	friend void initConnections(std::vector<Vertex>& vertices);
-	friend void printGameStatus(const std::vector<Vertex>& vertices);
-	friend bool isGameFinished(const std::vector<Vertex>& vertices);
-	friend void Game();
-
+    Chip(int id, int position) : id(id), position(position) {}
 };
 
-void initVertices(std::vector<Vertex>& vertices, int numVertices)
+// Класс для представления точек
+class Point 
 {
-	for (int count_vert = 0; count_vert < numVertices; count_vert++)
-	{
-		Vertex vertex;
-		vertex.id = count_vert + 1;
-		std::cout << "Enter vertex color " << vertex.color << ": ";
-		std::cin >> vertex.color;
-		vertices.push_back(vertex);
-	}
-}
+public:
+    int id;
+    int x;
+    int y;
 
-void initConnections(std::vector<Vertex>& vertices)
+    Point(int id, int x, int y) : id(id), x(x), y(y) {}
+};
+
+// Класс для представления соединений
+class Connection 
 {
-	int numConnections;
+public:
+    int id1;
+    int id2;
 
-	for (int count = 0; count < vertices.size(); count++)
-	{
-		std::cout << "Enter the number of connections for the vertex" << vertices[count].id << ": ";
-		std::cin >> numConnections;
+    Connection(int id1, int id2) : id1(id1), id2(id2) {}
+};
 
-		for (int count_connect = 0; count_connect < numConnections; count_connect++)
-		{
-			int connectedVertex;
-			std::cout << "Enter the number of linked vertex";
-			std::cin >> connectedVertex;
-			vertices[count].connections.push_back(connectedVertex);
-		}
-	}
-}
-
-void printGameStatus(const std::vector<Vertex>& vertices)
+// Класс для решения задачи
+class PuzzleSolver 
 {
-	std::cout << "Status of the game: " << std::endl;
-	for (const Vertex& vertex: vertices)
-		std::cout << "Vertex " << vertex.id 
-			<< ", color: " << vertex.color << std::endl;
-}
+private:
+    vector<Chip> chips;
+    vector<Point> points;
+    vector<Connection> connections;
+    unordered_map<int, vector<int>> graph;
 
-bool isGameFinished(const std::vector<Vertex>& vertices)
+    void readInputFromFile(const string& filename) 
+    {
+        ifstream inputFile(filename);
+        if (!inputFile.is_open()) 
+        {
+            cerr << "Failed to open the input file." << endl;
+            return;
+        }
+
+        int numChips, numPoints, numConnections;
+        inputFile >> numChips >> numPoints;
+
+        for (int i = 0; i < numPoints; i++) 
+        {
+            int x, y;
+            inputFile >> x >> y;
+            points.emplace_back(i + 1, x, y);
+        }
+
+        for (int i = 0; i < numChips; i++) {
+            int chipPosition;
+            inputFile >> chipPosition;
+            chips.emplace_back(i + 1, chipPosition);
+        }
+
+        for (int i = 0; i < numPoints; i++) {
+            int destination;
+            inputFile >> destination;
+            chips[i].position = destination;
+        }
+
+        inputFile >> numConnections;
+
+        for (int i = 0; i < numConnections; i++) {
+            int point1, point2;
+            inputFile >> point1 >> point2;
+            connections.emplace_back(point1, point2);
+        }
+
+        inputFile.close();
+    }
+
+    void buildGraph() {
+        for (const auto& connection : connections) 
+        {
+            graph[connection.id1].push_back(connection.id2);
+            graph[connection.id2].push_back(connection.id1);
+        }
+    }
+
+    vector<int> findPath(int start, int end) 
+    {
+        unordered_map<int, bool> visited;
+        unordered_map<int, int> prev;
+        queue<int> q;
+
+        q.push(start);
+        visited[start] = true;
+
+        while (!q.empty()) 
+        {
+            int current = q.front();
+            q.pop();
+
+            if (current == end) 
+            {
+                // Путь найден
+                break;
+            }
+
+            for (int neighbor : graph[current]) 
+            {
+                if (!visited[neighbor]) 
+                {
+                    q.push(neighbor);
+                    visited[neighbor] = true;
+                    prev[neighbor] = current;
+                }
+            }
+        }
+
+        // Восстановление пути
+        vector<int> path;
+        int current = end;
+
+        while (current != start) 
+        {
+            path.push_back(current);
+            current = prev[current];
+        }
+
+        path.push_back(start);
+        reverse(path.begin(), path.end());
+
+        return path;
+    }
+
+public:
+    void solvePuzzle(const string& inputFilename) 
+    {
+        readInputFromFile(inputFilename);
+        buildGraph();
+
+        for (const auto& chip : chips) 
+        {
+            int start = chip.position;
+            int end = points[chip.id - 1].id;
+
+            vector<int> path = findPath(start, end);
+
+            // Вывод пути
+            cout << "Path for Chip " << chip.id << ": ";
+            for (int point : path) {
+                cout << point << " ";
+            }
+            cout << endl;
+        }
+    }
+};
+
+int main() 
 {
-	for (const Vertex& vertex : vertices) 
-	{
-		if (!vertex.connections.empty())
-			return false;
-		
-		return true;
-	}
+    PuzzleSolver solver;
+    solver.solvePuzzle("input.txt");
+
+    return 0;
 }
-
-void Game()
-{
-	std::vector<Vertex> vertices;
-	int numVertices;
-
-	std::cout << "Enter number of connections: ";
-	std::cin >> numVertices;
-
-	initVertices(vertices, numVertices);
-	initConnections(vertices);
-
-	for (const Vertex& vertex : vertices)
-	{
-		/*int numCaps(1);*/
-		std::cout << vertex.color << " caps located in the next vertex "
-			<< vertex.id << std::endl;
-	}
-	
-	while (isGameFinished(vertices))
-	{
-		printGameStatus(vertices);
-		std::string selectedColor;
-		std::cout << "Choose color of the cap for move: ";
-		std::cin >> selectedColor;
-
-		int destinationVertex;
-		std::cout << "Choose the vertex, which need move cap";
-		std::cin >> destinationVertex;
-
-		bool isValidMove = false;
-
-		for (Vertex& vertex : vertices)
-		{
-			if (vertex.color == selectedColor)
-			{
-				for (int& connectedVertex : vertex.connections)
-				{
-					if (connectedVertex == destinationVertex)
-					{
-						isValidMove = true;
-						vertex.connections.clear();
-						break;
-					}
-				}
-				break;
-			}
-		}
-
-		if (isValidMove)
-			std::cout << "Cap was been successful moved in another vertex" 
-			<< destinationVertex << std::endl;
-		else
-			std::cout << "Unable to move a cap to the selected vertex" << std::endl;
-	}
-}
-
-int main()
-{
-	void game();
-	return 0;
-}
-
