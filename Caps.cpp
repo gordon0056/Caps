@@ -170,66 +170,69 @@
 //    }
 //};
 
-int main() 
+
+
+int main()
 {
-    //PuzzleSolver solver;
-    //solver.solvePuzzle("D:\\Source\\Caps\\x64\\Debug\\input.txt");
-    
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Chip Movement");
+	//PuzzleSolver solver;
+	//solver.solvePuzzle("D:\\Source\\Caps\\x64\\Debug\\input.txt");
 
-    sf::CircleShape chip(50.f);
-    chip.setFillColor(sf::Color::Green);
-    chip.setOutlineThickness(5.f);
+	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Chip Movement");
 
-    sf::Vector2f target(0.f, 0.f);
-    bool isSelected = false;
+	sf::CircleShape chip(50.f);
+	chip.setFillColor(sf::Color::Green);
+	chip.setOutlineThickness(5.f);
 
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
+	sf::Vector2f target(0.f, 0.f);
+	bool isSelected = false;
+	bool isMoving = false; // Добавляем флаг для проверки, перемещается ли фишка
 
-            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
-            {
-                sf::Vector2f mousePos(sf::Mouse::getPosition(window));
-                if (chip.getGlobalBounds().contains(mousePos))
-                {
-                    isSelected = true;
-                    chip.setOutlineColor(sf::Color::Yellow);
-                }
-                else
-                {
-                    isSelected = false;
-                    target = mousePos;
-                    chip.setOutlineColor(sf::Color::White);
-                }
-            }
-        }
+	while (window.isOpen())
+	{
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				window.close();
 
-        if (isSelected)
-        {
-            sf::Vector2f direction = target - chip.getPosition();
-            float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-            if (length > 1.f)
-            {
-                direction /= length;
-                chip.move(direction);
-            }
-            else
-            {
-                chip.setPosition(target);
-                chip.move(direction);
-            }
-        }
+			if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+			{
+				sf::Vector2f mousePos(sf::Mouse::getPosition(window));
+				if (chip.getGlobalBounds().contains(mousePos))
+				{
+					isSelected = !isSelected; // Переключаем выбранность фишки
+					chip.setOutlineColor(isSelected ? sf::Color::Yellow : sf::Color::White);
+				}
+				else if (isSelected) // Если фишка выбрана, устанавливаем новую цель
+				{
+					target = mousePos;
+					isMoving = true; // Устанавливаем флаг перемещения
+				}
+			}
+		}
 
-        window.clear(sf::Color::White);
-        window.draw(chip);
-        window.display();
-    }
+		if (isMoving)
+		{
+			sf::Vector2f direction = target - chip.getPosition();
+			float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+			if (length > 1.f)
+			{
+				direction /= length;
+				chip.move(direction);
+			}
+			else
+			{
+				chip.setPosition(target);
+				isMoving = false; // Обнуляем флаг перемещения
+				isSelected = false; // И сбрасываем выбранность фишки
+				chip.setOutlineColor(sf::Color::White); // И меняем обводку на белую
+			}
+		}
 
+		window.clear(sf::Color::White);
+		window.draw(chip);
+		window.display();
+	}
 
-    return 0;
+	return 0;
 }
