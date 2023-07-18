@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>D:\Source\Caps\x64\Debug\Caps.exe</FullPath>
+      <FullPath>D:\Source\Caps\Debug\Caps.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
