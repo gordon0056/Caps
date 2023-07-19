@@ -6,7 +6,6 @@
 #include <queue>
 #include <SFML/Graphics.hpp>
 
-using namespace std;
 
 // Класс для представления фишек
 class Chip 
@@ -44,17 +43,17 @@ public:
 class PuzzleSolver 
 {
 private:
-    vector<Chip> chips;
-    vector<Point> points;
-    vector<Connection> connections;
-    unordered_map<int, vector<int>> graph;
+    std::vector<Chip> chips;
+    std::vector<Point> points;
+    std::vector<Connection> connections;
+    std::unordered_map<int, std::vector<int>> graph;
 
-    void readInputFromFile(const string& filename) 
+    void readInputFromFile(const std::string& filename)
     {
-        ifstream inputFile(filename);
+        std::ifstream inputFile(filename);
         if (!inputFile.is_open()) 
         {
-            cerr << "Failed to open the input file." << endl;
+            std::cerr << "Failed to open the input file." << std::endl;
             return;
         }
 
@@ -103,11 +102,11 @@ private:
         }
     }
 
-    vector<int> findPath(int start, int end) 
+    std::vector<int> findPath(int start, int end)
     {
-        unordered_map<int, bool> visited;
-        unordered_map<int, int> prev;
-        queue<int> q;
+        std::unordered_map<int, bool> visited;
+        std::unordered_map<int, int> prev;
+        std::queue<int> q;
 
         q.push(start);
         visited[start] = true;
@@ -133,7 +132,7 @@ private:
         }
 
         // Восстановление пути
-        vector<int> path;
+        std::vector<int> path;
         int current = end;
 
         while (current != start) 
@@ -149,7 +148,7 @@ private:
     }
 
 public:
-    void solvePuzzle(const string& inputFilename) 
+    void solvePuzzle(const std::string& inputFilename)
     {
         readInputFromFile(inputFilename);
         buildGraph();
@@ -159,14 +158,14 @@ public:
             int start = chip.position;
             int end = points[chip.id - 1].id;
 
-            vector<int> path = findPath(start, end);
+            std::vector<int> path = findPath(start, end);
 
             // Вывод пути
-            cout << "Path for Chip " << chip.id << ": ";
+            std::cout << "Path for Chip " << chip.id << ": ";
             for (int point : path) 
-                cout << point << " ";
+                std::cout << point << " ";
             
-            cout << endl;
+            std::cout << std::endl;
         }
     }
 };
@@ -178,15 +177,15 @@ int main()
 	PuzzleSolver solver;
 	solver.solvePuzzle("D:\\Source\\Caps\\Caps\\input.txt");
 
-	/*sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Chip Movement");
+	sf::RenderWindow window(sf::VideoMode(800, 600), "sfml chip movement");
 
 	sf::CircleShape chip(50.f);
 	chip.setFillColor(sf::Color::Green);
-	chip.setOutlineThickness(5.f);
+    chip.setOutlineThickness(5.f);
 
 	sf::Vector2f target(0.f, 0.f);
-	bool isSelected = false;
-	bool isMoving = false; // Добавляем флаг для проверки, перемещается ли фишка
+	bool isselected = false;
+	bool ismoving = false; // добавляем флаг для проверки, перемещается ли фишка
 
 	while (window.isOpen())
 	{
@@ -198,21 +197,21 @@ int main()
 
 			if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
 			{
-				sf::Vector2f mousePos(sf::Mouse::getPosition(window));
-				if (chip.getGlobalBounds().contains(mousePos))
+				sf::Vector2f mousepos(sf::Mouse::getPosition(window));
+				if (chip.getGlobalBounds().contains(mousepos))
 				{
-					isSelected = !isSelected; // Переключаем выбранность фишки
-					chip.setOutlineColor(isSelected ? sf::Color::Yellow : sf::Color::White);
+					isselected = !isselected; // переключаем выбранность фишки
+					chip.setOutlineColor(isselected ? sf::Color::Yellow : sf::Color::White);
 				}
-				else if (isSelected) // Если фишка выбрана, устанавливаем новую цель
+				else if (isselected) // если фишка выбрана, устанавливаем новую цель
 				{
-					target = mousePos;
-					isMoving = true; // Устанавливаем флаг перемещения
+					target = mousepos;
+					ismoving = true; // устанавливаем флаг перемещения
 				}
 			}
 		}
 
-		if (isMoving)
+		if (ismoving)
 		{
 			sf::Vector2f direction = target - chip.getPosition();
 			float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
@@ -224,16 +223,16 @@ int main()
 			else
 			{
 				chip.setPosition(target);
-				isMoving = false; // Обнуляем флаг перемещения
-				isSelected = false; // И сбрасываем выбранность фишки
-				chip.setOutlineColor(sf::Color::White); // И меняем обводку на белую
+				ismoving = false; // обнуляем флаг перемещения
+				isselected = false; // и сбрасываем выбранность фишки
+				chip.setOutlineColor(sf::Color::White); // и меняем обводку на белую
 			}
 		}
 
 		window.clear(sf::Color::White);
 		window.draw(chip);
 		window.display();
-	}*/
+	}
 
 	return 0;
 }
