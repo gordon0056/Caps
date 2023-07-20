@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Caps.cpp" />
+    <ClCompile Include="Header.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.h" />
