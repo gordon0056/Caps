@@ -1,2 +1,3 @@
-﻿  Caps.cpp
+﻿  Header.cpp
+D:\Source\Caps\Caps\Header.cpp(75,20): warning C4018: <: несоответствие типов со знаком и без знака
   Caps.vcxproj -> D:\Source\Caps\Debug\Caps.exe
