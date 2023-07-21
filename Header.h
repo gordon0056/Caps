@@ -12,10 +12,10 @@ class Chip
 {
 public:
 	unsigned int id;
-	unsigned int position;
+	unsigned int currentPosition;
 	unsigned int target;
 
-	Chip(unsigned int id, unsigned int position) : id(id), position(position), target(0) {}
+	Chip(unsigned int id, unsigned int position) : id(id), currentPosition(position), target(0) {}
 };
 
 class Point
@@ -58,5 +58,6 @@ private:
 public:
 
 	void solvePuzzle(const std::string& inputFilename);
-	void start();
+
+	void start(const std::string& inputFilename);
 };

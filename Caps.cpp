@@ -3,6 +3,6 @@
 int main()
 {
 	Game game;
-	game.start();
+	game.start("D:\\Source\\Caps\\Caps\\input.txt");
 	return 0;
 }

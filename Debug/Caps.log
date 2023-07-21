@@ -1,3 +1,4 @@
 ﻿  Header.cpp
-D:\Source\Caps\Caps\Header.cpp(75,20): warning C4018: <: несоответствие типов со знаком и без знака
+D:\Source\Caps\Caps\Header.cpp(80,76): warning C4244: аргумент: преобразование "unsigned int" в "float", возможна потеря данных
+D:\Source\Caps\Caps\Header.cpp(80,48): warning C4244: аргумент: преобразование "unsigned int" в "float", возможна потеря данных
   Caps.vcxproj -> D:\Source\Caps\Debug\Caps.exe

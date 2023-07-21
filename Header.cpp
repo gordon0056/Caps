@@ -66,22 +66,23 @@ void Game::Generation()
 
 	sf::RenderWindow window(sf::VideoMode(800, 600), "sfml chip movement");
 
-	const int chipCount = 6;
+	int chipCount = chips.size();
 	std::vector<sf::CircleShape> chips(chipCount, sf::CircleShape(25.f));
 	std::vector<sf::Vector2f> targets(chipCount, sf::Vector2f(0.f, 0.f));
 	std::vector<bool> isselected(chipCount, false);
 	std::vector<bool> ismoving(chipCount, false);
 
-	for (int i = 0; i < chips.size(); ++i)
+	for (int i = 0; i < chipCount; ++i)
 	{
-	 chips[i].setFillColor(sf::Color::Green);
-	 chips[i].setOutlineThickness(5.f);
-	 chips[i].setPosition(100.f + i * 100.f, 100.f); // пример расположения фишек
+		chips[i].setFillColor(sf::Color(i * 1000 % 255 + i * 10, i * 1000 % 255 + i * 20, i * 1000 % 255 + i * 50));
+		chips[i].setOutlineThickness(5.f);
+		int chipPosition = this->chips[i].currentPosition;
+		chips[i].setPosition(points[chipPosition - 1].x, points[chipPosition - 1].y);
 	}
 
 	sf::RectangleShape square(sf::Vector2f(50.f, 250.f));
 	square.setPosition(100, 100);
-	square.setFillColor(sf::Color(180, 180, 180));
+	square.setFillColor(sf::Color(200, 200, 200));
 
 	while (window.isOpen())
 	{
@@ -118,7 +119,7 @@ void Game::Generation()
 				float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
 				if (length > 1.f)
 				{
-					direction /= length + 1200;
+					direction /= length;
 					chips[i].move(direction);
 				}
 				else
@@ -135,6 +136,7 @@ void Game::Generation()
 		window.draw(square);
 		for (const auto& chip : chips)
 			window.draw(chip);
+
 		window.display();
 	}
 }
@@ -190,7 +192,7 @@ void Game::solvePuzzle(const std::string& inputFilename)
 
 	for (const auto& chip : chips)
 	{
-		int start = chip.position;
+		int start = chip.currentPosition;
 		int end = points[chip.id - 1].id;
 
 		std::vector<int> path = findPath(start, end);
@@ -203,7 +205,8 @@ void Game::solvePuzzle(const std::string& inputFilename)
 	}
 }
 
-void Game::start()
+void Game::start(const std::string& inputFilename)
 {
+	this->Initialization(inputFilename);
 	this->Generation();
 }
