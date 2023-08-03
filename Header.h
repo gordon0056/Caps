@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -14,18 +15,20 @@ public:
 	unsigned int id;
 	unsigned int currentPosition;
 	unsigned int target;
+	bool isSelected = false;
 
-	Chip(unsigned int id, unsigned int position) : id(id), currentPosition(position), target(0) {}
+	Chip(unsigned int id, unsigned int position) : id(id), currentPosition(position), target(NULL) {}
 };
 
 class Point
 {
 public:
 	unsigned int id;
-	unsigned int x;
-	unsigned int y;
+	float x;
+	float y;
+	bool isHighlighted = false;
 
-	Point(unsigned int id, unsigned int x, unsigned int y) : id(id), x(x), y(y) {}
+	Point(unsigned int id, float x, float y) : id(id), x(x), y(y) {}
 };
 
 class Connection
@@ -51,13 +54,17 @@ private:
 
 	void Initialization(const std::string& inputFilename);
 
-	void Generation();
+	void Generation(const std::string& sprite);
 
-	std::vector<int> findPath(int start, int end);
+	std::unordered_map<int, std::vector<int>> findPath(int start);
+
+	std::vector<int> findRoute(int start, int end);
+
+	void highlightPath(const std::unordered_map<int, std::vector<int>>& pathMap, int selectedChipIndex);
+
+	bool checkWinCondition();
 
 public:
 
-	void solvePuzzle(const std::string& inputFilename);
-
-	void start(const std::string& inputFilename);
+	void start(const std::string& inputFilename, const std::string& sprite);
 };

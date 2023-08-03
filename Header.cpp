@@ -1,5 +1,19 @@
 #include "Header.h"
 
+sf::Color colors[] =
+{
+	sf::Color(255, 0, 0),       // red
+	sf::Color(255, 165, 0),     // orange
+	sf::Color(255, 255, 100),   // citric
+	sf::Color(0, 255, 0),       // green
+	sf::Color(0, 255, 255),     // blue
+	sf::Color(0, 0, 255),       // dark blue
+	sf::Color(128, 0, 128),     // violet
+	sf::Color(255, 192, 203),   // pink
+	sf::Color(255, 0, 255),		// purple
+	sf::Color(128,64,48)		// brown
+};
+
 void Game::readInputFromFile(const std::string& filename)
 {
 	std::ifstream inputFile(filename);
@@ -59,30 +73,29 @@ void Game::Initialization(const std::string& inputFilename)
 	buildGraph();
 }
 
-void Game::Generation()
+void Game::Generation(const std::string& sprite)
 {
-	/*PuzzleSolver solver;
-	solver.solvePuzzle("D:\\Source\\Caps\\Caps\\input.txt");*/
-
 	sf::RenderWindow window(sf::VideoMode(800, 600), "sfml chip movement");
 
 	int chipCount = chips.size();
-	std::vector<sf::CircleShape> chips(chipCount, sf::CircleShape(25.f));
-	std::vector<sf::Vector2f> targets(chipCount, sf::Vector2f(0.f, 0.f));
-	std::vector<bool> isselected(chipCount, false);
-	std::vector<bool> ismoving(chipCount, false);
+	std::vector<sf::CircleShape> chipsShapes(chipCount, sf::CircleShape(25.f));
+	std::vector<sf::CircleShape> pointsShapes(points.size(), sf::CircleShape(25.f));
 
 	for (int i = 0; i < chipCount; ++i)
 	{
-		chips[i].setFillColor(sf::Color(i * 1000 % 255 + i * 10, i * 1000 % 255 + i * 20, i * 1000 % 255 + i * 50));
-		chips[i].setOutlineThickness(5.f);
+		chipsShapes[i].setFillColor(colors[i % 10]);
+		chipsShapes[i].setOutlineThickness(5.f);
 		int chipPosition = this->chips[i].currentPosition;
-		chips[i].setPosition(points[chipPosition - 1].x, points[chipPosition - 1].y);
+		chipsShapes[i].setPosition(points[chipPosition - 1].x, points[chipPosition - 1].y);
 	}
 
-	sf::RectangleShape square(sf::Vector2f(50.f, 250.f));
-	square.setPosition(100, 100);
-	square.setFillColor(sf::Color(200, 200, 200));
+	int selectedChipIndex = -1;
+
+	sf::Clock clock;
+	sf::Time elapsed;
+
+	std::vector<int> currentRoute;
+	int currentRouteIndex = 0;
 
 	while (window.isOpen())
 	{
@@ -97,51 +110,158 @@ void Game::Generation()
 				sf::Vector2f mousepos(sf::Mouse::getPosition(window));
 				for (int i = 0; i < chipCount; ++i)
 				{
-					if (chips[i].getGlobalBounds().contains(mousepos))
+					if (chipsShapes[i].getGlobalBounds().contains(mousepos))
 					{
-						isselected[i] = !isselected[i];
-						chips[i].setOutlineColor(isselected[i] ? sf::Color::Yellow : sf::Color::White);
-					}
-					else if (isselected[i])
-					{
-						targets[i] = mousepos - sf::Vector2f(25.f, 25.f);
-						ismoving[i] = true;
-					}
-				}
-			}
-		}
+						if (selectedChipIndex != -1 && selectedChipIndex != i)
+						{
 
-		for (int i = 0; i < chipCount; ++i)
-		{
-			if (ismoving[i])
-			{
-				sf::Vector2f direction = targets[i] - chips[i].getPosition();
-				float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-				if (length > 1.f)
-				{
-					direction /= length;
-					chips[i].move(direction);
-				}
-				else
-				{
-					chips[i].setPosition(targets[i]);
-					ismoving[i] = false;
-					isselected[i] = false;
-					chips[i].setOutlineColor(sf::Color::White);
+							chips[selectedChipIndex].isSelected = false;
+							chipsShapes[selectedChipIndex].setOutlineColor(sf::Color::White);
+							for (Point& point : points)
+							{
+								point.isHighlighted = false;
+							}
+						}
+
+						chips[i].isSelected = !chips[i].isSelected;
+						chipsShapes[i].setOutlineColor(chips[i].isSelected ? sf::Color::Yellow : sf::Color::White);
+
+						if (chips[i].isSelected)
+						{
+							selectedChipIndex = i;
+							auto pathMap = findPath(chips[i].currentPosition);
+							highlightPath(pathMap, selectedChipIndex);
+						}
+						else
+						{
+							selectedChipIndex = -1;
+							for (Point& point : points)
+							{
+								point.isHighlighted = false;
+							}
+						}
+					}
+					else if (chips[i].isSelected)
+					{
+						for (Point& point : points)
+						{
+							if (pointsShapes[point.id - 1].getGlobalBounds().contains(mousepos) && point.isHighlighted)
+							{
+								chipsShapes[i].setPosition(point.x, point.y);
+								chips[i].currentPosition = point.id;
+								chips[i].isSelected = false;
+								chipsShapes[i].setOutlineColor(sf::Color::White);
+								selectedChipIndex = -1;
+
+								for (Point& point : points)
+								{
+									point.isHighlighted = false;
+								}
+							}
+						}
+					}
 				}
 			}
 		}
 
 		window.clear(sf::Color::White);
-		window.draw(square);
-		for (const auto& chip : chips)
-			window.draw(chip);
+
+		//draw connections
+		for (const auto& connection : connections)
+		{
+			sf::Vertex line[] =
+			{
+				sf::Vertex(sf::Vector2f(points[connection.id1 - 1].x + 25, points[connection.id1 - 1].y + 25)),
+				sf::Vertex(sf::Vector2f(points[connection.id2 - 1].x + 25, points[connection.id2 - 1].y + 25))
+			};
+
+			for (int i = 0; i < 2; ++i)
+			{
+				line[i].color = sf::Color::Black;
+			}
+
+			window.draw(line, 2, sf::Lines);
+		}
+
+		//draw vertices
+		for (int i = 0; i < points.size(); ++i)
+		{
+
+			pointsShapes[i].setFillColor(sf::Color(192, 192, 192));
+			pointsShapes[i].setOutlineThickness(5.f);
+			pointsShapes[i].setOutlineColor(points[i].isHighlighted ? sf::Color::Yellow : sf::Color::White);
+			pointsShapes[i].setPosition(points[i].x, points[i].y);
+			window.draw(pointsShapes[i]);
+		}
+
+		//draw chips
+		for (int i = 0; i < chipCount; ++i)
+		{
+			window.draw(chipsShapes[i]);
+		}
+
+		if (checkWinCondition())
+		{
+			sf::Texture textureWin;
+			textureWin.loadFromFile(sprite);
+			sf::Sprite spriteWin(textureWin);
+			spriteWin.setPosition(125, 200);
+			window.draw(spriteWin);
+			window.display();
+			sf::sleep(sf::seconds(5));
+			window.close();
+			return;
+		}
 
 		window.display();
 	}
 }
 
-std::vector<int> Game::findPath(int start, int end)
+std::unordered_map<int, std::vector<int>> Game::findPath(int start)
+{
+	std::queue<int> nodeQueue;
+	std::unordered_map<int, std::vector<int>> pathMap;
+	std::unordered_map<int, int> parentMap;
+
+	nodeQueue.push(start);
+	parentMap[start] = -1;
+	pathMap[start] = std::vector<int>(); // Initialize an empty path for the starting vertex
+
+	for (const auto& chip : chips)
+	{
+		if (chip.currentPosition != start)
+		{
+			parentMap[chip.currentPosition] = -2;
+		}
+	}
+
+	while (!nodeQueue.empty())
+	{
+		int currentNode = nodeQueue.front();
+		nodeQueue.pop();
+
+		for (int adjacentNode : graph[currentNode])
+		{
+			if (parentMap.find(adjacentNode) == parentMap.end())
+			{
+				if (parentMap[currentNode] != -2)
+				{
+					nodeQueue.push(adjacentNode);
+					parentMap[adjacentNode] = currentNode;
+
+					pathMap[adjacentNode] = pathMap[currentNode]; // Inherit the path from the previous vertex
+					pathMap[adjacentNode].push_back(adjacentNode); // Adding the current vertex to the path
+				}
+			}
+		}
+	}
+
+	pathMap.erase(start);
+
+	return pathMap;
+}
+
+std::vector<int> Game::findRoute(int start, int end)
 {
 	std::unordered_map<int, bool> visited;
 	std::unordered_map<int, int> prev;
@@ -157,7 +277,6 @@ std::vector<int> Game::findPath(int start, int end)
 
 		if (current == end)
 			break;
-
 
 		for (int neighbor : graph[current])
 		{
@@ -179,34 +298,43 @@ std::vector<int> Game::findPath(int start, int end)
 		current = prev[current];
 	}
 
-	path.push_back(start);
-	reverse(path.begin(), path.end());
+	std::reverse(path.begin(), path.end());
 
 	return path;
 }
 
-void Game::solvePuzzle(const std::string& inputFilename)
+void Game::start(const std::string& inputFilename, const std::string& sprite)
 {
-	readInputFromFile(inputFilename);
-	buildGraph();
+	this->Initialization(inputFilename);
+	this->Generation(sprite);
+}
 
-	for (const auto& chip : chips)
+void Game::highlightPath(const std::unordered_map<int, std::vector<int>>& pathMap, int selectedChipIndex)
+{
+	for (const auto& entry : pathMap)
 	{
-		int start = chip.currentPosition;
-		int end = points[chip.id - 1].id;
+		int pointId = entry.first;
+		const std::vector<int>& path = entry.second;
 
-		std::vector<int> path = findPath(start, end);
-
-		std::cout << "Path for Chip " << chip.id << ": ";
-		for (int point : path)
-			std::cout << point << " ";
-
-		std::cout << std::endl;
+		if (pointId != chips[selectedChipIndex].currentPosition)
+		{
+			for (int nodeId : path)
+			{
+				points[nodeId - 1].isHighlighted = true;
+			}
+		}
 	}
 }
 
-void Game::start(const std::string& inputFilename)
+bool Game::checkWinCondition()
 {
-	this->Initialization(inputFilename);
-	this->Generation();
+	for (const auto& chip : chips)
+	{
+		if (chip.currentPosition != chip.target)
+		{
+			return false;
+		}
+	}
+	return true;
 }
+
