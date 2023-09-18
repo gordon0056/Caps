@@ -89,13 +89,19 @@ void Game::Generation(const std::string& sprite)
 		chipsShapes[i].setPosition(points[chipPosition - 1].x, points[chipPosition - 1].y);
 	}
 
-	int selectedChipIndex = -1;
+	sf::Vector2f targetPosition;
+	sf::Vector2f currentPosition;
+	sf::Vector2f direction(0.f, 0.f);
+	float length = 0.f;
+
+	float speed = 100.f;
+	float distance = 0.f;
 
 	sf::Clock clock;
-	sf::Time elapsed;
 
-	std::vector<int> currentRoute;
-	int currentRouteIndex = 0;
+	int selectedChipIndex = -1;
+	int chipIndex = 0, pointIndex = 0;
+	std::vector<int> route;
 
 	while (window.isOpen())
 	{
@@ -143,6 +149,7 @@ void Game::Generation(const std::string& sprite)
 					}
 					else if (chips[i].isSelected)
 					{
+						chipIndex = i;
 						for (Point& point : points)
 						{
 							if (pointsShapes[point.id - 1].getGlobalBounds().contains(mousepos) && point.isHighlighted)
@@ -161,6 +168,43 @@ void Game::Generation(const std::string& sprite)
 						}
 					}
 				}
+			}
+		}
+
+		if (chips[chipIndex].isSelected)
+		{
+			sf::Vector2f mousepos(sf::Mouse::getPosition(window));
+			currentPosition = chipsShapes[chipIndex].getPosition();
+			for (Point& point : points)
+			{
+				if (pointsShapes[point.id - 1].getGlobalBounds().contains(mousepos) && point.isHighlighted)
+					targetPosition = pointsShapes[point.id - 1].getPosition();
+				pointIndex = point.id;
+			}
+			direction = targetPosition - currentPosition;
+			length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+			direction /= length;
+			distance = 0.f;
+			route = findRoute(chipIndex + 1, pointIndex);
+			
+			if (true)
+			{
+
+			}
+
+			sf::Time deltatime = clock.restart();
+			float frameDistance = speed * deltatime.asSeconds();
+
+			if (distance < length)
+			{
+				distance += frameDistance;
+				if (distance >= length)
+				{
+					chipsShapes[chipIndex].setPosition(targetPosition);
+					distance = length;
+				}
+				else
+					chipsShapes[chipIndex].move(direction * distance);
 			}
 		}
 
